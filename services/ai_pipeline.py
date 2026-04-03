@@ -1,8 +1,15 @@
 """
 AI Analysis Pipeline
-Uses Groq (LLaMA-3-8B-Instant) via LangChain.
-Monte Carlo sampling: runs N inference passes with temperature variation,
-then aggregates results for higher reliability/accuracy.
+Uses Groq (LLaMA-3.3-70b-versatile) via LangChain.
+
+Large doc strategy:
+  - Splits text into chunks of ~4000 chars with overlap
+  - Each chunk analyzed independently, results merged at end
+
+Monte Carlo strategy:
+  - 1 run per chunk for large docs (avoids rate limits)
+  - MC runs=3 for small docs only
+  - Sequential with backoff delay between calls
 """
 
 import asyncio
@@ -11,7 +18,6 @@ import logging
 import os
 import re
 from collections import Counter
-from typing import Any
 
 from langchain_groq import ChatGroq
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -22,10 +28,12 @@ from prompts.analysis_prompt import build_system_prompt, build_user_prompt
 
 logger = logging.getLogger(__name__)
 
-# ── Monte Carlo Config ─────────────────────────────────────────────────────────
-MC_RUNS = int(os.getenv("MC_RUNS", "3"))
+# ── Config ─────────────────────────────────────────────────────────────────────
+MC_RUNS         = int(os.getenv("MC_RUNS", "3"))
 MC_TEMPERATURES = [0.0, 0.2, 0.4]
-MAX_TEXT_CHARS = int(os.getenv("MAX_TEXT_CHARS", "6000"))
+CHUNK_SIZE      = int(os.getenv("CHUNK_SIZE", "4000"))
+CHUNK_OVERLAP   = int(os.getenv("CHUNK_OVERLAP", "200"))
+CALL_DELAY      = float(os.getenv("CALL_DELAY", "3.0"))
 
 
 def _get_llm(temperature: float = 0.1) -> ChatGroq:
@@ -33,96 +41,127 @@ def _get_llm(temperature: float = 0.1) -> ChatGroq:
     if not api_key:
         raise RuntimeError("GROQ_API_KEY environment variable not set")
     return ChatGroq(
-        model="llama-3.1-8b-instant",
+        model="llama-3.3-70b-versatile",
         temperature=temperature,
         api_key=api_key,
-        max_tokens=500,
+        max_tokens=1200,
     )
 
 
-def _truncate(text: str, max_chars: int = MAX_TEXT_CHARS) -> str:
-    if len(text) <= max_chars:
-        return text
-    half = max_chars // 2
-    return text[:half] + "\n\n[... MIDDLE TRUNCATED FOR CONTEXT WINDOW ...]\n\n" + text[-half:]
+# ── Chunking ───────────────────────────────────────────────────────────────────
 
+def _split_into_chunks(text: str) -> list[str]:
+    if len(text) <= CHUNK_SIZE:
+        return [text]
+    chunks = []
+    start = 0
+    while start < len(text):
+        end = start + CHUNK_SIZE
+        chunk = text[start:end]
+        if end < len(text):
+            break_at = chunk.rfind("\n\n")
+            if break_at == -1 or break_at < CHUNK_SIZE // 2:
+                break_at = chunk.rfind(". ")
+            if break_at != -1 and break_at > CHUNK_SIZE // 2:
+                chunk = chunk[:break_at + 1]
+        chunks.append(chunk.strip())
+        start += len(chunk) - CHUNK_OVERLAP
+    logger.info(f"Split document into {len(chunks)} chunks")
+    return chunks
+
+
+# ── JSON parsing ───────────────────────────────────────────────────────────────
 
 def _parse_llm_json(raw: str) -> dict | None:
-    """Robustly extract JSON from LLM response (handles markdown fences)."""
     cleaned = re.sub(r"```(?:json)?", "", raw).strip().strip("`").strip()
-
     try:
         return json.loads(cleaned)
     except json.JSONDecodeError:
         pass
-
     match = re.search(r"\{.*\}", cleaned, re.DOTALL)
     if match:
         try:
             return json.loads(match.group())
         except json.JSONDecodeError:
             pass
-
     logger.warning(f"Could not parse LLM JSON: {raw[:300]}")
     return None
 
 
-# ── UPDATED FUNCTION ───────────────────────────────────────────────────────────
+# ── Single LLM call with retry ─────────────────────────────────────────────────
+
 async def _single_run(text: str, temperature: float) -> dict | None:
-    """Single inference pass with retry for rate limits."""
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             llm = _get_llm(temperature)
-            system = build_system_prompt()
-            user = build_user_prompt(text)
-
             messages = [
-                SystemMessage(content=system),
-                HumanMessage(content=user)
+                SystemMessage(content=build_system_prompt()),
+                HumanMessage(content=build_user_prompt(text)),
             ]
-
-            # 🔥 FIX: removed asyncio.to_thread
             response = llm.invoke(messages)
-
             return _parse_llm_json(response.content)
-
         except Exception as e:
-            if "429" in str(e):
-                wait = 5 * (attempt + 1)
-                logger.warning(f"Rate limited. Retrying in {wait}s...")
+            err = str(e)
+            if "429" in err or "rate" in err.lower():
+                wait = 8 * (attempt + 1)
+                logger.warning(f"Rate limited (attempt {attempt+1}). Waiting {wait}s...")
                 await asyncio.sleep(wait)
             else:
                 logger.error(f"LLM run failed at temp={temperature}: {e}")
                 return None
-
+    logger.error("All retry attempts exhausted.")
     return None
 
 
-# ── Aggregation ────────────────────────────────────────────────────────────────
+# ── Aggregation helpers ────────────────────────────────────────────────────────
 
 def _majority_vote_sentiment(sentiments: list[str]) -> str:
     valid = [s.lower() for s in sentiments if s.lower() in ("positive", "neutral", "negative")]
-    if not valid:
-        return "neutral"
-    return Counter(valid).most_common(1)[0][0]
+    return Counter(valid).most_common(1)[0][0] if valid else "neutral"
 
 
-def _best_summary(summaries: list[str]) -> str:
+def _majority_vote_str(values: list[str], fallback: str = "") -> str:
+    valid = [v.strip() for v in values if v and v.strip()]
+    return Counter(valid).most_common(1)[0][0] if valid else fallback
+
+
+def _merge_summaries(summaries: list[str]) -> str:
     valid = [s.strip() for s in summaries if s and len(s.strip()) > 20]
     if not valid:
         return "Summary not available."
-    return max(valid, key=len)
+    if len(valid) == 1:
+        return valid[0]
+    combined = " ".join(valid)
+    if len(combined) > 1200:
+        combined = combined[:1200].rsplit(".", 1)[0] + "."
+    return combined
+
+
+def _merge_key_points(all_points: list[list]) -> list[str]:
+    seen = set()
+    result = []
+    for points in all_points:
+        if not isinstance(points, list):
+            continue
+        for p in points:
+            if isinstance(p, str) and p.strip():
+                key = p.strip().lower()
+                if key not in seen:
+                    seen.add(key)
+                    result.append(p.strip())
+    return result[:8]
 
 
 def _merge_entities(all_entities: list[dict]) -> EntitiesModel:
-    fields = ["names", "dates", "organizations", "amounts", "locations"]
-    counts: dict[str, Counter] = {f: Counter() for f in fields}
-    casing: dict[str, dict[str, Counter]] = {f: {} for f in fields}
+    list_fields = ["names", "organizations", "locations", "dates",
+                   "amounts", "emails", "phones", "urls", "keywords"]
+    counts: dict[str, Counter] = {f: Counter() for f in list_fields}
+    casing: dict[str, dict[str, Counter]] = {f: {} for f in list_fields}
 
     for ent_dict in all_entities:
         if not isinstance(ent_dict, dict):
             continue
-        for field in fields:
+        for field in list_fields:
             items = ent_dict.get(field, [])
             if isinstance(items, list):
                 for item in items:
@@ -131,55 +170,68 @@ def _merge_entities(all_entities: list[dict]) -> EntitiesModel:
                         counts[field][key] += 1
                         casing[field].setdefault(key, Counter())[item.strip()] += 1
 
-    threshold = max(1, len(all_entities) // 2)
     result: dict[str, list[str]] = {}
-
-    for field in fields:
-        consensus = []
-        for key, count in counts[field].items():
-            if count >= threshold:
-                best_casing = casing[field][key].most_common(1)[0][0]
-                consensus.append(best_casing)
-        result[field] = sorted(set(consensus))[:20]
+    for field in list_fields:
+        result[field] = [
+            casing[field][key].most_common(1)[0][0]
+            for key in counts[field]
+            if counts[field][key] >= 1
+        ][:20]
 
     return EntitiesModel(**result)
 
 
-# ── UPDATED MAIN PIPELINE ──────────────────────────────────────────────────────
+# ── Main pipeline ──────────────────────────────────────────────────────────────
 
 async def run_analysis(raw_text: str, file_name: str) -> AnalyzeResponse:
-    truncated = _truncate(raw_text)
-    temperatures = MC_TEMPERATURES[:MC_RUNS]
+    chunks = _split_into_chunks(raw_text)
+    is_large_doc = len(chunks) > 1
 
-    logger.info(f"Starting Monte Carlo analysis | runs={MC_RUNS} | text_len={len(truncated)}")
+    all_summaries:  list[str]  = []
+    all_sentiments: list[str]  = []
+    all_entities:   list[dict] = []
+    all_key_points: list[list] = []
+    all_doc_types:  list[str]  = []
+    all_languages:  list[str]  = []
 
-    # 🔥 FIX: Sequential execution with delay
-    raw_results = []
-    for t in temperatures:
-        res = await _single_run(truncated, t)
-        raw_results.append(res)
-        await asyncio.sleep(2)  # prevent rate limit
+    if is_large_doc:
+        logger.info(f"Large doc mode | chunks={len(chunks)}")
+        for i, chunk in enumerate(chunks):
+            logger.info(f"Processing chunk {i+1}/{len(chunks)}")
+            result = await _single_run(chunk, temperature=0.1)
+            if result:
+                all_summaries.append(result.get("summary", ""))
+                all_sentiments.append(result.get("sentiment", "neutral"))
+                all_entities.append(result.get("entities", {}))
+                all_key_points.append(result.get("key_points", []))
+                all_doc_types.append(result.get("document_type", ""))
+                all_languages.append(result.get("language", ""))
+            if i < len(chunks) - 1:
+                await asyncio.sleep(CALL_DELAY)
+    else:
+        logger.info(f"Small doc mode | MC runs={MC_RUNS}")
+        for i, t in enumerate(MC_TEMPERATURES[:MC_RUNS]):
+            result = await _single_run(chunks[0], temperature=t)
+            if result:
+                all_summaries.append(result.get("summary", ""))
+                all_sentiments.append(result.get("sentiment", "neutral"))
+                all_entities.append(result.get("entities", {}))
+                all_key_points.append(result.get("key_points", []))
+                all_doc_types.append(result.get("document_type", ""))
+                all_languages.append(result.get("language", ""))
+            if i < MC_RUNS - 1:
+                await asyncio.sleep(CALL_DELAY)
 
-    results = [r for r in raw_results if r is not None]
-    logger.info(f"MC completed | successful_runs={len(results)}/{MC_RUNS}")
-
-    if not results:
+    if not all_summaries:
         raise RuntimeError("All LLM inference passes failed. Check GROQ_API_KEY and model availability.")
-
-    summaries = [r.get("summary", "") for r in results]
-    sentiments = [r.get("sentiment", "neutral") for r in results]
-    entities_raw = [r.get("entities", {}) for r in results]
-
-    final_summary = _best_summary(summaries)
-    final_sentiment = _majority_vote_sentiment(sentiments)
-    final_entities = _merge_entities(entities_raw)
-
-    logger.info(f"Analysis complete | sentiment={final_sentiment} | summary_len={len(final_summary)}")
 
     return AnalyzeResponse(
         status="success",
         fileName=file_name,
-        summary=final_summary,
-        entities=final_entities,
-        sentiment=final_sentiment,
+        document_type=_majority_vote_str(all_doc_types, "Other"),
+        summary=_merge_summaries(all_summaries),
+        key_points=_merge_key_points(all_key_points),
+        entities=_merge_entities(all_entities),
+        sentiment=_majority_vote_sentiment(all_sentiments),
+        language=_majority_vote_str(all_languages, "English"),
     )
