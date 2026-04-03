@@ -1,0 +1,704 @@
+[
+  {
+    "id": 1,
+    "name": "Corporate Earnings Report",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_1.pdf",
+      "summary": "TechNova Corporation reported record Q3 2024 revenue of $2.4 billion, up 32% year-over-year, and expanded into European markets with a new office in Berlin, Germany. The company also acquired DataStream Analytics for $150 million. CFO James Rodriguez confirmed FY2024 revenue guidance at $9.2 billion.",
+      "entities": {
+        "names": [
+          "James Rodriguez",
+          "Sarah Mitchell"
+        ],
+        "dates": [
+          "2023",
+          "2024",
+          "FY2024",
+          "October 15, 2024",
+          "Q3 2024",
+          "September 2, 2024"
+        ],
+        "organizations": [
+          "DataStream Analytics",
+          "TechNova Corporation"
+        ],
+        "amounts": [
+          "$0.85",
+          "$150 million",
+          "$2.4 billion",
+          "$320 million",
+          "$480 million",
+          "$9.2 billion"
+        ],
+        "locations": [
+          "Berlin",
+          "California",
+          "Europe",
+          "Germany",
+          "San Francisco"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  },
+  {
+    "id": 2,
+    "name": "Employment Contract",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_2.docx",
+      "summary": "This is an employment agreement between GlobalTech Solutions Inc. and Dr. Priya Sharma for a Senior Data Scientist position, outlining compensation, benefits, and governing laws.",
+      "entities": {
+        "names": [
+          "Dr. Priya Sharma",
+          "John Walker"
+        ],
+        "dates": [
+          "December 20, 2024",
+          "February 1, 2025",
+          "January 6, 2025"
+        ],
+        "organizations": [
+          "GlobalTech Solutions Inc."
+        ],
+        "amounts": [
+          "$10,000",
+          "$145,000",
+          "20%"
+        ],
+        "locations": [
+          "Austin, Texas"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 3,
+    "name": "Negative Product Review",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_3.pdf",
+      "summary": "The customer, Marcus Johnson from Acme Logistics LLC, reports a disastrous experience with ProjectFlow Pro v4.2, citing constant crashes, data loss, and unresponsive support, resulting in $25,000 in lost productivity and a demand for a full refund.",
+      "entities": {
+        "names": [
+          "Marcus Johnson"
+        ],
+        "dates": [
+          "2024",
+          "February 14, 2024",
+          "March 8, 2024"
+        ],
+        "organizations": [
+          "Acme Logistics LLC",
+          "TechBridge Software Inc."
+        ],
+        "amounts": [
+          "$25,000",
+          "$3,200"
+        ],
+        "locations": [
+          "Chicago",
+          "Chicago, Illinois",
+          "Illinois"
+        ]
+      },
+      "sentiment": "negative"
+    }
+  },
+  {
+    "id": 4,
+    "name": "Medical Research Abstract",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_4.pdf",
+      "summary": "This Phase III clinical trial of CardioShield-X, a treatment for major adverse cardiac events, showed a 67% reduction in adverse events compared to a placebo group, with a favorable safety profile. The study was funded by the National Institutes of Health with a grant of $4.2 million and plans to submit for FDA approval in Q3 2024.",
+      "entities": {
+        "names": [
+          "Dr. Aisha Patel",
+          "Dr. Elena Vasquez",
+          "Dr. Michael Chen"
+        ],
+        "dates": [
+          "December 2023",
+          "January 2022",
+          "May 22, 2024",
+          "Q3 2024"
+        ],
+        "organizations": [
+          "FDA",
+          "Johns Hopkins University",
+          "National Institutes of Health"
+        ],
+        "amounts": [
+          "$4.2 million"
+        ],
+        "locations": [
+          "Boston",
+          "Los Angeles",
+          "New York"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  },
+  {
+    "id": 5,
+    "name": "Real Estate Lease Agreement",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_5.docx",
+      "summary": "This is a commercial lease agreement between Harbor Properties LLC and Sunrise Caf\u00e9 & Bakery for a property at 1842 Ocean Drive, Miami, Florida. The lease term is from February 1, 2025 to January 31, 2028, with increasing monthly rent and a security deposit of $9,000.",
+      "entities": {
+        "names": [
+          "Anna Kowalski",
+          "Thomas Bennett"
+        ],
+        "dates": [
+          "December 28, 2024",
+          "February 1, 2025",
+          "January 15, 2025",
+          "January 31, 2028"
+        ],
+        "organizations": [
+          "Harbor Properties LLC",
+          "Sunrise Caf\u00e9 & Bakery"
+        ],
+        "amounts": [
+          "$4,500",
+          "$4,725",
+          "$4,961",
+          "$9,000"
+        ],
+        "locations": [
+          "Florida",
+          "Miami",
+          "Ocean Drive"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 6,
+    "name": "News Article \u2013 Natural Disaster",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_6.pdf",
+      "summary": "Hurricane Marlene made landfall in Tampa, Florida, causing catastrophic damage and flooding to nearby cities. Governor Rebecca Holloway declared a state of emergency, and estimated damages exceed $8.7 billion. The storm resulted in at least 23 fatalities and led to a federal disaster declaration.",
+      "entities": {
+        "names": [
+          "Carlos Espinoza",
+          "Rebecca Holloway"
+        ],
+        "dates": [
+          "September 17, 2024",
+          "September 18, 2024"
+        ],
+        "organizations": [
+          "FEMA",
+          "Gulf Coast Daily",
+          "Red Cross"
+        ],
+        "amounts": [
+          "$8.7 billion"
+        ],
+        "locations": [
+          "Clearwater",
+          "Florida",
+          "Gainesville",
+          "Hillsborough County",
+          "Orlando",
+          "Pinellas County",
+          "St. Petersburg",
+          "Tampa"
+        ]
+      },
+      "sentiment": "negative"
+    }
+  },
+  {
+    "id": 7,
+    "name": "Invoice Document",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_7.pdf",
+      "summary": "This is an invoice from Nexus Digital Agency to BlueWave Marketing Solutions for services rendered in October 2024, totaling $21,230.63, with a due date of November 30, 2024.",
+      "entities": {
+        "names": [],
+        "dates": [
+          "November 1, 2024",
+          "November 30, 2024",
+          "October 2024"
+        ],
+        "organizations": [
+          "BlueWave Marketing Solutions",
+          "Nexus Digital Agency"
+        ],
+        "amounts": [
+          "$1,730.63",
+          "$1,800.00",
+          "$12,000.00",
+          "$19,500.00",
+          "$2,200.00",
+          "$21,230.63",
+          "$3,500.00"
+        ],
+        "locations": [
+          "5th Avenue",
+          "Market Street",
+          "New York",
+          "San Francisco"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 8,
+    "name": "Academic Research Paper",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_8.pdf",
+      "summary": "This document presents TransLow, a novel transformer architecture for low-resource language translation, achieving state-of-the-art results on 47 language pairs with a BLEU score of 34.8, surpassing the previous best result by 18.8%. The model uses only 0.4% of the training data required by competing methods, making it accessible for communities with limited computational resources.",
+      "entities": {
+        "names": [
+          "Fatima Al-Hassan",
+          "Robert O'Brien",
+          "Wei Zhang"
+        ],
+        "dates": [
+          "2022",
+          "2024",
+          "August 2024",
+          "December 10-15",
+          "December 10-15, 2024",
+          "January 2022"
+        ],
+        "organizations": [
+          "Google",
+          "Google Research",
+          "MIT Computer Science & Artificial Intelligence Laboratory (CSAIL)",
+          "NSF"
+        ],
+        "amounts": [
+          "$890,000"
+        ],
+        "locations": [
+          "Canada",
+          "Vancouver"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  },
+  {
+    "id": 9,
+    "name": "Court Legal Notice",
+    "score": {
+      "summary": 1,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 9.0,
+      "notes": [
+        "Summary missing keywords: ['court', 'legal', 'defendant'] (hits=0)"
+      ]
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_9.docx",
+      "summary": "A lawsuit filed by Meridian Financial Group, Inc. against Alexander Petrov for breach of contract, fraud, and unjust enrichment, alleging misappropriation of $2,350,000 between March 2023 and January 2024.",
+      "entities": {
+        "names": [
+          "Alexander Petrov",
+          "David Goldstein",
+          "Patricia Nguyen"
+        ],
+        "dates": [
+          "August 5, 2024",
+          "February 1, 2022",
+          "January 8, 2024",
+          "March 15, 2023",
+          "October 14, 2024"
+        ],
+        "organizations": [
+          "Goldstein & Associates LLP",
+          "Los Angeles Superior Court",
+          "Meridian Financial Group, Inc.",
+          "Superior Court of California"
+        ],
+        "amounts": [
+          "$2,350,000"
+        ],
+        "locations": [
+          "111 North Hill Street",
+          "California",
+          "Los Angeles",
+          "Sunset Boulevard"
+        ]
+      },
+      "sentiment": "negative"
+    }
+  },
+  {
+    "id": 10,
+    "name": "Travel Itinerary",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_10.pdf",
+      "summary": "This document outlines a corporate travel itinerary for Jennifer Okafor from November 18-22, 2024, including flights, hotels, and connecting travel. The total trip cost is $4,890.00, \u00a3570.00, and \u20ac440.00.",
+      "entities": {
+        "names": [
+          "Jennifer Okafor"
+        ],
+        "dates": [
+          "November 18",
+          "November 18-22, 2024",
+          "November 20",
+          "November 22"
+        ],
+        "organizations": [
+          "Air France",
+          "Delta Airlines",
+          "Eurostar",
+          "Hotel Le Marais",
+          "The Grand Kensington Hotel"
+        ],
+        "amounts": [
+          "$1,247.00",
+          "$2,190.00",
+          "\u00a3285",
+          "\u00a3285.00",
+          "\u00a389.00",
+          "\u20ac220",
+          "\u20ac220.00",
+          "\u20ac440.00"
+        ],
+        "locations": [
+          "Hotel Le Marais",
+          "JFK",
+          "Kensington",
+          "London",
+          "London Heathrow",
+          "London St Pancras",
+          "London, UK",
+          "New York",
+          "New York JFK",
+          "Paris",
+          "Paris CDG",
+          "Paris Gare du Nord",
+          "Paris, France",
+          "The Grand Kensington Hotel"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 11,
+    "name": "Press Release \u2013 Product Launch",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_11.docx",
+      "summary": "InnovateTech Inc. launched CloudVault 3.0, a next-generation enterprise data management platform, featuring 10x faster query performance, AI-powered data governance, and seamless integration with popular cloud services. The platform is available starting July 1, 2024, with pricing from $8,500/month. Early adopters include Goldman Sachs and Toyota Motor Corporation.",
+      "entities": {
+        "names": [
+          "Daniel Kim",
+          "Lisa Park"
+        ],
+        "dates": [
+          "2024",
+          "July 1, 2024",
+          "June 3, 2024"
+        ],
+        "organizations": [
+          "AWS",
+          "Goldman Sachs",
+          "InnovateTech Inc.",
+          "Microsoft Azure",
+          "Salesforce",
+          "Toyota Motor Corporation"
+        ],
+        "amounts": [
+          "$8,500"
+        ],
+        "locations": [
+          "California",
+          "SAN JOSE"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  },
+  {
+    "id": 12,
+    "name": "Bank Statement",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_12.pdf",
+      "summary": "This is the account statement for Christopher Williams at First National Bank, covering the period from October 1 to October 31, 2024. The statement includes various transactions, a direct deposit, mortgage payment, and other expenses, resulting in a closing balance of $14,260.01.",
+      "entities": {
+        "names": [
+          "Christopher Williams"
+        ],
+        "dates": [
+          "2024",
+          "October 1",
+          "October 31"
+        ],
+        "organizations": [
+          "Amazon",
+          "Chase Bank NYC",
+          "First National Bank",
+          "Pacific Gas & Electric",
+          "PayPal",
+          "The Italian Place",
+          "Wells Fargo",
+          "Whole Foods"
+        ],
+        "amounts": [
+          "$1,000.00",
+          "$1,920.00",
+          "$12,450.00",
+          "$14,260.01",
+          "$178.00",
+          "$234.50",
+          "$3,789.99",
+          "$300.00",
+          "$4,850.00",
+          "$5,600.00",
+          "$67.50",
+          "$750.00",
+          "$89.99"
+        ],
+        "locations": [
+          "NYC",
+          "New York City"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 13,
+    "name": "Resignation Letter",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 0,
+      "total": 6.0,
+      "notes": [
+        "Sentiment mismatch: expected=positive got=neutral"
+      ]
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_13.docx",
+      "summary": "Ms. Patricia Chen received a formal resignation letter from Nathan Brooks, Senior Marketing Manager at Horizon Brands International, effective April 12, 2024, citing a new opportunity as VP of Marketing at a startup company.",
+      "entities": {
+        "names": [
+          "Ms. Patricia Chen",
+          "Nathan Brooks",
+          "Patricia Chen"
+        ],
+        "dates": [
+          "April 12, 2024",
+          "March 15, 2024",
+          "March 30th",
+          "Q2",
+          "Q2 2024"
+        ],
+        "organizations": [
+          "Horizon Brands International",
+          "startup company"
+        ],
+        "amounts": [],
+        "locations": [
+          "Chicago",
+          "Toronto"
+        ]
+      },
+      "sentiment": "neutral"
+    }
+  },
+  {
+    "id": 14,
+    "name": "NGO Impact Report",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_14.pdf",
+      "summary": "Clean Water for All's 2023 annual impact report highlights the organization's mission to provide clean water access to people in sub-Saharan Africa, achieving key milestones such as installing 1,240 water wells and training 3,500 technicians, with a total budget of $12.4 million.",
+      "entities": {
+        "names": [
+          "Dr. Amara Diallo"
+        ],
+        "dates": [
+          "2023",
+          "2024",
+          "December 15, 2023",
+          "June 2023"
+        ],
+        "organizations": [
+          "Clean Water for All",
+          "Microsoft",
+          "Patagonia",
+          "UNICEF",
+          "USAID",
+          "World Health Organization"
+        ],
+        "amounts": [
+          "$10.9 million",
+          "$12.4 million",
+          "$16 million",
+          "$2.4 million",
+          "$4.2 million",
+          "$5.8 million"
+        ],
+        "locations": [
+          "Ethiopia",
+          "Kenya",
+          "Malawi",
+          "Mozambique",
+          "Nairobi",
+          "Tanzania",
+          "Uganda",
+          "Zambia",
+          "sub-Saharan Africa"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  },
+  {
+    "id": 15,
+    "name": "Merger Announcement",
+    "score": {
+      "summary": 2,
+      "entities": 4.0,
+      "sentiment": 4,
+      "total": 10.0,
+      "notes": []
+    },
+    "response": {
+      "status": "success",
+      "fileName": "test_15.pdf",
+      "summary": "NovaStar Technologies Inc. and Quantum Data Corp announced a definitive merger agreement valued at $14.8 billion, creating a combined entity pending regulatory approval. The merged company will be headquartered in Seattle, Washington, and retain approximately 18,400 employees globally. The merger is expected to generate annual cost synergies of $420 million within two years and accelerate entry into the Asia-Pacific market.",
+      "entities": {
+        "names": [
+          "Robert Castellano",
+          "Victoria Huang"
+        ],
+        "dates": [
+          "April 2, 2024",
+          "September 30, 2024"
+        ],
+        "organizations": [
+          "Goldman Sachs",
+          "Morgan Stanley",
+          "NovaStar Technologies Inc.",
+          "Quantum Data Corp"
+        ],
+        "amounts": [
+          "$14.8 billion",
+          "$420 million"
+        ],
+        "locations": [
+          "Asia-Pacific",
+          "New York City",
+          "Seattle",
+          "Seattle, Washington",
+          "Singapore",
+          "Sydney",
+          "Tokyo",
+          "Washington"
+        ]
+      },
+      "sentiment": "positive"
+    }
+  }
+]

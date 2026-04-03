@@ -1,0 +1,135 @@
+# ------------------------------
+
+# Python cache & compiled files
+
+# ------------------------------
+
+**pycache**/
+*.py[cod]
+*$py.class
+
+# ------------------------------
+
+# Virtual environments
+
+# ------------------------------
+
+venv/
+.env/
+env/
+ENV/
+.venv/
+
+# ------------------------------
+
+# Environment variables & secrets
+
+# ------------------------------
+
+.env
+.env.*
+*.env
+*.key
+*.pem
+*.crt
+*.json  # ⚠️ includes your GCP service account key
+
+# (Optional: if you ONLY want to ignore GCP key specifically, use instead)
+
+# *gcp*.json
+
+# ------------------------------
+
+# Logs & temp files
+
+# ------------------------------
+
+*.log
+*.tmp
+*.temp
+*.swp
+
+# ------------------------------
+
+# OS files
+
+# ------------------------------
+
+.DS_Store
+Thumbs.db
+
+# ------------------------------
+
+# IDE / Editor folders
+
+# ------------------------------
+
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# ------------------------------
+
+# Build / distribution
+
+# ------------------------------
+
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ------------------------------
+
+# Jupyter Notebook
+
+# ------------------------------
+
+.ipynb_checkpoints/
+
+# ------------------------------
+
+# Testing / coverage
+
+# ------------------------------
+
+.coverage
+coverage.xml
+htmlcov/
+
+# ------------------------------
+
+# Pytest cache
+
+# ------------------------------
+
+.pytest_cache/
+
+# ------------------------------
+
+# MyPy / type checking
+
+# ------------------------------
+
+.mypy_cache/
+
+# ------------------------------
+
+# FastAPI / server artifacts
+
+# ------------------------------
+
+*.db
+*.sqlite3
+
+# ------------------------------
+
+# Misc
+
+# ------------------------------
+
+*.bak
+*.backup
