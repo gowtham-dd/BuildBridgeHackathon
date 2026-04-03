@@ -1,19 +1,20 @@
 # DocuSense — AI Document Analyzer API
 
-> **Hackathon Track 2** · FastAPI · Groq LLaMA-3-8B-Instant · Monte Carlo consensus · EasyOCR + Tesseract · PyMuPDF · python-docx
+> **Hackathon Track 2** · FastAPI · Groq LLaMA-3.3-70B · Monte Carlo consensus · Google Vision API · Tesseract fallback · python-docx
 
 ---
 
 ## 🚀 Live Demo
-- **API:** `https://your-app.onrender.com/api/document-analyze`
-- **Web UI:** `https://your-app.onrender.com/`
+- **API:** `https://buildbridgehackathon.onrender.com/api/document-analyze`
+- **Web UI:** `https://buildbridgehackathon.onrender.com/`
+- **Swagger Docs:** `https://buildbridgehackathon.onrender.com/docs`
 
 ---
 
 ## 📐 Architecture & Approach
 
 ```
-Request (PDF/DOCX/Image base64)
+Request (File Upload — PDF / DOCX / Image)
         │
         ▼
 ┌──────────────────────┐
@@ -21,34 +22,43 @@ Request (PDF/DOCX/Image base64)
 └──────────┬───────────┘
            │
            ▼
-┌──────────────────────┐
-│  Extraction Layer    │  PDF → PyMuPDF (layout-preserving)
-│                      │  DOCX → python-docx (.doc auto-converted via LibreOffice)
-│                      │  Image → EasyOCR (deep learning) → Tesseract (fallback)
-└──────────┬───────────┘
+┌──────────────────────────────────────────────────────────────┐
+│                    Extraction Layer                          │
+│                                                              │
+│  PDF   → Google Vision API (pages rendered as PNG → OCR)    │
+│           └─ Fallback: PyMuPDF text extraction               │
+│  DOCX  → python-docx  (.doc auto-converted via LibreOffice)  │
+│  Image → Google Vision API (document_text_detection)        │
+│           └─ Fallback: Tesseract OCR                         │
+└──────────┬───────────────────────────────────────────────────┘
            │
            ▼
 ┌──────────────────────────────────────────────────────────────┐
 │               Monte Carlo AI Pipeline                        │
 │                                                              │
-│  5 parallel Groq LLaMA-3-8B-Instant calls                   │
-│  Temperature ladder: [0.0, 0.1, 0.2, 0.3, 0.4]             │
+│  Small docs  → 3 Groq LLaMA-3.3-70B passes                  │
+│                Temperature ladder: [0.0, 0.2, 0.4]          │
+│  Large docs  → 1 pass per chunk (4000 chars, 200 overlap)    │
 │                                                              │
 │  Aggregation:                                                │
-│    summary   → longest / most detailed response             │
-│    sentiment → majority vote across 5 runs                  │
-│    entities  → consensus: items in ≥ 3/5 runs               │
+│    summary      → longest / most detailed across runs       │
+│    key_points   → union across chunks, deduplicated         │
+│    sentiment    → majority vote                             │
+│    entities     → union across all runs / chunks            │
+│    document_type→ majority vote                             │
+│    language     → majority vote                             │
 └──────────┬───────────────────────────────────────────────────┘
            │
            ▼
-    Structured JSON response
+    Structured JSON response (10 entity types)
 ```
 
 ### Why Monte Carlo?
-Single LLM calls are stochastic. By running multiple passes at varying temperatures:
-- **Sentiment** is determined by majority vote → reduces single-pass hallucination
-- **Entities** are deduplicated and consensus-filtered → only confirmed entities survive
-- **Summary** uses the most detailed successful output
+Single LLM calls are stochastic. Running multiple passes at varying temperatures:
+- **Sentiment** — majority vote reduces single-pass hallucination
+- **Entities** — union across runs ensures nothing is missed
+- **Summary** — most detailed successful output is selected
+- **Large docs** — chunked processing means no page is ever truncated or skipped
 
 ---
 
@@ -57,12 +67,14 @@ Single LLM calls are stochastic. By running multiple passes at varying temperatu
 | Layer | Technology |
 |---|---|
 | Web Framework | FastAPI + Uvicorn |
-| LLM | Groq · `llama-3-1-8b-instant` |
+| LLM | Groq · `llama-3.3-70b-versatile` |
 | LLM Orchestration | LangChain + langchain-groq |
-| PDF Extraction | PyMuPDF (fitz) — layout preserving |
+| PDF Extraction | Google Vision API (page-by-page PNG OCR) |
+| PDF Fallback | PyMuPDF (fitz) |
 | DOCX Extraction | python-docx |
 | .doc Conversion | LibreOffice headless |
-| Image OCR | EasyOCR (primary) · Tesseract (fallback) |
+| Image OCR | Google Vision API (primary) · Tesseract (fallback) |
+| Deployment | Render (Docker runtime) |
 | Validation | Pydantic v2 |
 
 ---
@@ -72,68 +84,29 @@ Single LLM calls are stochastic. By running multiple passes at varying temperatu
 ```
 doc-analyzer/
 ├── main.py                    # FastAPI app entry point
-├── requirements.txt
-├── .env.example
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Container build (Tesseract + LibreOffice + Python 3.11)
+├── render.yaml                # Render deployment config (Docker runtime)
+├── README.md
 │
 ├── routers/
-│   └── analyze.py             # POST /api/document-analyze
+│   └── analyze.py             # POST /api/document-analyze + auth + file upload
 │
 ├── models/
-│   ├── request.py             # AnalyzeRequest schema
+│   ├── request.py             # (legacy — endpoint now uses UploadFile directly)
 │   ├── response.py            # AnalyzeResponse schema
-│   └── entities.py            # EntitiesModel sub-schema
+│   └── entities.py            # EntitiesModel — 10 entity categories
 │
 ├── services/
-│   ├── extractor.py           # PDF / DOCX / Image extraction
-│   └── ai_pipeline.py         # Monte Carlo LLM orchestration
+│   ├── extractor.py           # PDF / DOCX / Image extraction (Google Vision)
+│   └── ai_pipeline.py         # Monte Carlo LLM orchestration + chunking + aggregation
 │
 ├── prompts/
 │   └── analysis_prompt.py     # System + user prompt builders
 │
 └── static/
-    └── index.html             # Web UI (Chart.js visualizations)
+    └── index.html             # Web UI (Chart.js — doughnut + bar charts + entity grid)
 ```
-
----
-
-## ⚙️ Setup & Run
-
-### 1. Clone & install
-
-```bash
-git clone https://github.com/your-handle/doc-analyzer.git
-cd doc-analyzer
-python -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. System dependencies
-
-```bash
-# Ubuntu/Debian
-sudo apt-get install -y tesseract-ocr libreoffice
-
-# macOS
-brew install tesseract libreoffice
-```
-
-### 3. Configure environment
-
-```bash
-cp .env.example .env
-# Edit .env and set:
-#   GROQ_API_KEY=your_key_from_console.groq.com
-#   API_KEY=any_secret_key_you_choose
-```
-
-### 4. Run
-
-```bash
-uvicorn main:app --reload --port 8000
-```
-
-Open `http://localhost:8000` for the Web UI.  
-API docs at `http://localhost:8000/docs`.
 
 ---
 
@@ -141,35 +114,43 @@ API docs at `http://localhost:8000/docs`.
 
 ### `POST /api/document-analyze`
 
+Accepts a file directly as **multipart/form-data** — no base64 encoding needed.
+
 **Headers**
-```
-Content-Type: application/json
-x-api-key: your_api_key
-```
 
-**Request Body**
-```json
-{
-  "fileName": "invoice.pdf",
-  "fileType": "pdf",
-  "fileBase64": "<base64-encoded file content>"
-}
-```
+| Key | Value |
+|---|---|
+| `x-api-key` | `mysecretkey123` |
 
-`fileType` must be one of: `"pdf"` | `"docx"` | `"image"`
+**Body**
+
+| Key | Type | Value |
+|---|---|---|
+| `file` | File | your document (pdf / docx / doc / png / jpg / jpeg / webp / tiff / bmp / gif) |
 
 **Response**
 ```json
 {
   "status": "success",
   "fileName": "invoice.pdf",
+  "document_type": "Invoice",
+  "language": "English",
   "summary": "This document is an invoice from Acme Corp...",
+  "key_points": [
+    "Total invoice amount is $12,500 due by 15 February 2024",
+    "Services rendered include software development and consulting",
+    "Payment terms specify a 15-day settlement window"
+  ],
   "entities": {
-    "names": ["John Smith"],
-    "dates": ["2024-01-15", "Q1 2024"],
+    "names": ["John Smith", "Priya Rajan"],
     "organizations": ["Acme Corp", "Tech Solutions Ltd"],
-    "amounts": ["$12,500.00", "15%"],
-    "locations": ["New York, NY", "San Francisco"]
+    "locations": ["New York, NY", "San Francisco"],
+    "dates": ["2024-01-15", "Q1 2024"],
+    "amounts": ["$12,500.00"],
+    "emails": ["john@acmecorp.com"],
+    "phones": ["+1-800-555-0199"],
+    "urls": ["www.acmecorp.com"],
+    "keywords": ["invoice", "software development", "consulting", "payment terms"]
   },
   "sentiment": "neutral"
 }
@@ -180,103 +161,118 @@ x-api-key: your_api_key
 | Code | Meaning |
 |---|---|
 | 401 | Invalid or missing x-api-key |
-| 422 | No text could be extracted |
+| 400 | Unsupported file type or empty file |
+| 413 | File too large (max 20 MB) |
+| 422 | No text could be extracted from the document |
 | 500 | Internal server error |
 
 ---
 
-## ☁️ Deploy to Render
+## 🧪 Testing the API with Postman
 
-1. Push to GitHub
-2. Create a new **Web Service** on [render.com](https://render.com)
-3. Set **Build Command:** `pip install -r requirements.txt`
-4. Set **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
-5. Add environment variables: `GROQ_API_KEY`, `API_KEY`
+### Step 1 — Create a new request
+- Method: **POST**
+- URL: `https://buildbridgehackathon.onrender.com/api/document-analyze`
 
-> ⚠️ Render free tier may need system packages. Add a `render.yaml`:
-> ```yaml
-> services:
->   - type: web
->     name: doc-analyzer
->     runtime: python
->     buildCommand: apt-get install -y tesseract-ocr libreoffice && pip install -r requirements.txt
->     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
->     envVars:
->       - key: GROQ_API_KEY
->         sync: false
->       - key: API_KEY
->         sync: false
-> ```
+### Step 2 — Add the API key header
+Go to the **Headers** tab and add:
+
+| Key | Value |
+|---|---|
+| `x-api-key` | `mysecretkey123` |
+
+### Step 3 — Attach your file
+Go to **Body** tab → select **form-data**
+
+Add a row:
+
+| Key | Type | Value |
+|---|---|---|
+| `file` | **File** ← change the dropdown from Text to File | click Select Files → pick your document |
+
+> ⚠️ The Type column defaults to `Text` — you **must** switch it to **File** or the upload won't work.
+
+### Step 4 — Hit Send
+
+You will get back a full JSON response with summary, key points, 10 entity categories, sentiment, document type, and detected language.
 
 ---
 
-## 🧪 Testing
+## 🌐 Testing via Swagger UI
 
-### Unit tests (offline — no API key required)
+Visit [`https://buildbridgehackathon.onrender.com/docs`](https://buildbridgehackathon.onrender.com/docs) in your browser.
+
+1. Click `POST /api/document-analyze` → **Try it out**
+2. Enter `mysecretkey123` in the `x-api-key` field
+3. Click **Choose File** and select your document
+4. Click **Execute**
+
+---
+
+## 🏷 Extracted Entities — All 10 Categories
+
+| Entity | What it extracts |
+|---|---|
+| `names` | Full person names (e.g. "Dr. John Smith") |
+| `organizations` | Companies, universities, institutions, brands |
+| `locations` | Cities, states, countries, addresses |
+| `dates` | All date and time references |
+| `amounts` | Monetary values with currency symbols |
+| `emails` | Email addresses |
+| `phones` | Phone, mobile, fax numbers |
+| `urls` | Websites, domains, social handles |
+| `keywords` | Top 5–10 domain-specific terms or topics |
+
+Plus `document_type` (Invoice / Resume / Contract / Report etc.) and `language` at the top level.
+
+---
+
+## 🖥 Web UI
+
+Visit [`https://buildbridgehackathon.onrender.com`](https://buildbridgehackathon.onrender.com) for the visual interface.
+
+- Drag & drop or browse to upload any supported file
+- Enter `mysecretkey123` in the API Key field
+- Visualizations include:
+  - **Sentiment doughnut chart** — positive / neutral / negative weighting
+  - **Entity distribution bar chart** — count across all 9 entity types
+  - **Entity grid** — colour-coded tags for every extracted entity
+  - **Key points** — numbered bullet findings from the document
+  - **Raw JSON toggle** — view the full API response inline
+
+---
+
+## ⚙️ Environment Variables
+
+| Variable | Description |
+|---|---|
+| `GROQ_API_KEY` | Your key from [console.groq.com](https://console.groq.com) |
+| `API_KEY` | Secret key for endpoint auth (`mysecretkey123`) |
+| `GOOGLE_CREDENTIALS_JSON` | Full JSON string from your GCP service account key file |
+| `MC_RUNS` | Monte Carlo passes for small docs (default: `3`) |
+| `CHUNK_SIZE` | Characters per chunk for large docs (default: `4000`) |
+| `CHUNK_OVERLAP` | Overlap between chunks (default: `200`) |
+| `CALL_DELAY` | Seconds between Groq calls to avoid rate limits (default: `3.0`) |
+
+---
+
+## 🧪 Running Tests Locally
+
+### Unit tests (no API key required)
 ```bash
 pytest tests/test_unit.py -v
 ```
-Tests cover: Monte Carlo aggregation, majority vote, entity casing, JSON parsing, truncation, and extractor helpers.
 
-### Hackathon eval suite (15 cases, 100 pts)
+### Full eval suite
 ```bash
-# With local server running:
-python tests/test_api.py --url http://localhost:8000 --key your_api_key
-
-# Against deployed URL:
-python tests/test_api.py --url https://your-app.onrender.com --key your_api_key
+# Against the live deployed URL
+python tests/test_api.py --url https://buildbridgehackathon.onrender.com --key mysecretkey123
 ```
 
-Scoring breakdown per test:
-- **Summary** — 2 pts: length check + keyword coverage
-- **Entities** — 4 pts: minimum counts per category (names/dates/orgs/amounts/locations)
-- **Sentiment** — 4 pts: exact match
-
-Results are saved to `test_report.json` with full per-test breakdown.
-
-### Quick curl test
-```bash
-B64=$(base64 -w 0 my_document.pdf)
-
-curl -X POST http://localhost:8000/api/document-analyze \
-  -H "Content-Type: application/json" \
-  -H "x-api-key: your_api_key" \
-  -d "{\"fileName\":\"my_document.pdf\",\"fileType\":\"pdf\",\"fileBase64\":\"$B64\"}"
-```
+Results saved to `test_report.json` with per-test scoring breakdown.
 
 ---
 
-## 📁 Full Project Structure
+## 🌍 Language Support
 
-```
-doc-analyzer/
-├── main.py                    # FastAPI app entry point
-├── requirements.txt           # Python dependencies
-├── .env.example               # Environment variable template
-├── Dockerfile                 # Container build (includes Tesseract + LibreOffice)
-├── render.yaml                # One-click Render.com deployment
-├── pytest.ini                 # Test configuration
-├── README.md
-│
-├── routers/
-│   └── analyze.py             # POST /api/document-analyze + auth middleware
-│
-├── models/
-│   ├── request.py             # AnalyzeRequest (fileName, fileType, fileBase64)
-│   ├── response.py            # AnalyzeResponse (status, fileName, summary, entities, sentiment)
-│   └── entities.py            # EntitiesModel (names, dates, organizations, amounts, locations)
-│
-├── services/
-│   ├── extractor.py           # PDF (PyMuPDF) / DOCX (python-docx) / Image (EasyOCR→Tesseract)
-│   └── ai_pipeline.py         # Monte Carlo LLM orchestration + aggregation
-│
-├── prompts/
-│   └── analysis_prompt.py     # System + user prompt builders (isolated for tuning)
-│
-├── static/
-│   └── index.html             # Web UI with Chart.js doughnut + bar charts
-│
-└── tests/
-    ├── test_unit.py           # Offline unit tests (aggregation, parsing, extraction)
-    └── test_api.py            # 15-case hackathon eval suite with scoring
-```
+Google Vision API auto-detects the document language — no configuration needed. Supports 100+ languages including Tamil, Hindi, Telugu, Arabic, Chinese, Japanese, French, German and more. The API response (summary, entities, key points) is always returned in **English** regardless of the source document language. The `language` field in the response indicates what language the original document was written in.
