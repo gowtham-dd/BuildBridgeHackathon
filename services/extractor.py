@@ -260,3 +260,4 @@ def extract_text(
         return _extract_image(data)
     else:
         raise ValueError(f"Unsupported file type: {file_type}")
+    

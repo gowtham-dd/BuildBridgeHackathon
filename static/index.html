@@ -413,26 +413,25 @@
 
     const apiKey   = document.getElementById('apiKey').value.trim();
     const fileType = detectFileType(selectedFile.name);
-    if (!fileType) { showError('Unsupported file type.'); return; }
-
-    const base64 = await toBase64(selectedFile);
+    if (!fileType) { showError('Unsupported file type. Use pdf, docx, doc, png, jpg, jpeg, webp, tiff, bmp, or gif.'); return; }
 
     document.getElementById('results').style.display = 'none';
     document.getElementById('loader').style.display = 'block';
     analyzeBtn.disabled = true;
 
     try {
+      // Send file directly as multipart/form-data — no base64 needed
+      const formData = new FormData();
+      formData.append('file', selectedFile, selectedFile.name);
+
+      const headers = {};
+      if (apiKey) headers['x-api-key'] = apiKey;
+      // Do NOT set Content-Type manually — browser sets it with correct boundary
+
       const resp = await fetch('/api/document-analyze', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(apiKey ? { 'x-api-key': apiKey } : {})
-        },
-        body: JSON.stringify({
-          fileName: selectedFile.name,
-          fileType,
-          fileBase64: base64
-        })
+        headers,
+        body: formData
       });
 
       const data = await resp.json();
@@ -444,15 +443,6 @@
       document.getElementById('loader').style.display = 'none';
       analyzeBtn.disabled = false;
     }
-  }
-
-  function toBase64(file) {
-    return new Promise((res, rej) => {
-      const r = new FileReader();
-      r.onload  = () => res(r.result.split(',')[1]);
-      r.onerror = () => rej(new Error('File read failed'));
-      r.readAsDataURL(file);
-    });
   }
 
   // ── Render ───────────────────────────────────────────────────────

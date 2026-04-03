@@ -1,18 +1,9 @@
 services:
   - type: web
     name: doc-analyzer
-    runtime: python
+    runtime: docker         
     region: oregon
     plan: free
-    pythonVersion: 3.11
-
-    buildCommand: |
-      apt-get update
-      apt-get install -y tesseract-ocr libreoffice
-      pip install --upgrade pip
-      pip install -r requirements.txt
-
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
 
     envVars:
       - key: GROQ_API_KEY
