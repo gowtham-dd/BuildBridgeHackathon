@@ -18,10 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /app
 
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
-# Pre-download EasyOCR english model at build time (avoids cold-start delay)
-RUN python -c "import easyocr; easyocr.Reader(['en'], gpu=False, verbose=False)" || true
+RUN pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
