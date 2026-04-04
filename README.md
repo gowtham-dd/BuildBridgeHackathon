@@ -10,6 +10,15 @@
 - **Swagger Docs:** `https://buildbridgehackathon.onrender.com/docs`
 
 ---
+## 🤖 AI Tools Used
+
+* **Groq LLaMA-3.3-70B (`llama-3.3-70b-versatile`)**
+* **Google Cloud Vision API**
+* **Tesseract OCR**
+* **LangChain**
+
+---
+
 
 ## 📐 Architecture & Approach
 
